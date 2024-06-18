@@ -12,10 +12,10 @@ import { ModalProvider } from "@/components/providers/model-provider";
 const font = Open_Sans({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "ChatCord",
-  description: "Discord-clone",
+  title: "HOMIES",
+  description: "homies",
   icons: {
-    icon: "https://discord.com/assets/847541504914fd33810e70a0ea73177e.icottps://discord.com/favicon.ico",
+    icon: "/logo.ico",
   },
 };
 
