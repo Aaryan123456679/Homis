@@ -1,11 +1,8 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { LiveKitRoom, VideoConference } from "@livekit/components-react";
-import "@livekit/components-styles";
-import { Channel } from "@prisma/client";
+import { useState } from "react";
 import { useUser } from "@clerk/nextjs";
-import { Loader2 } from "lucide-react";
+import { PhoneOff } from "lucide-react";
 
 interface MediaRoomProps {
   chatId: string;
@@ -15,45 +12,64 @@ interface MediaRoomProps {
 
 export const MediaRoom = ({ chatId, video, audio }: MediaRoomProps) => {
   const { user } = useUser();
-  const [token, setToken] = useState("");
+  const [ended, setEnded] = useState(false);
 
-  useEffect(() => {
-    if (!user?.firstName || !user?.lastName) return;
-
-    const name = `${user.firstName} ${user.lastName}`;
-
-    (async () => {
-      try {
-        const resp = await fetch(
-          `/api/livekit?room=${chatId}&username=${name}`
-        );
-        const data = await resp.json();
-        setToken(data.token);
-      } catch (e) {
-        console.log(e);
-      }
-    })();
-  }, [user?.firstName, user?.lastName, chatId]);
-
-  if (token === "") {
+  if (ended) {
     return (
-      <div className="flex flex-col flex-1 justify-center items-center">
-        <Loader2 className="h-7 w-7 text-zinc-500 animate-spin my-4" />
-        <p className="text-xs text-zinc-500 dark:text-zinc-400">Loading...</p>
+      <div className="flex flex-col flex-1 justify-center items-center gap-y-3">
+        <PhoneOff className="h-10 w-10 text-zinc-500" />
+        <p className="text-zinc-500 dark:text-zinc-400 font-medium">
+          Call ended
+        </p>
+        <button
+          onClick={() => setEnded(false)}
+          className="text-xs text-indigo-500 underline hover:text-indigo-400 transition"
+        >
+          Rejoin
+        </button>
       </div>
     );
   }
 
+  const displayName = user
+    ? [user.firstName, user.lastName].filter(Boolean).join(" ") ||
+      user.emailAddresses?.[0]?.emailAddress ||
+      "User"
+    : "User";
+
+  const params = [
+    `config.startWithAudioMuted=${!audio}`,
+    `config.startWithVideoMuted=${!video}`,
+    `config.prejoinPageEnabled=false`,
+    `config.disableDeepLinking=true`,
+    `config.disableLobbyMode=true`,
+    `config.startAsModerator=true`,
+    `config.lobby.enabled=false`,
+    `config.p2p.enabled=false`,
+    `interfaceConfig.SHOW_PROMOTIONAL_CLOSE_PAGE=false`,
+    `interfaceConfig.SHOW_POWERED_BY=false`,
+    `interfaceConfig.SHOW_JITSI_WATERMARK=false`,
+    `interfaceConfig.MOBILE_APP_PROMO=false`,
+    `interfaceConfig.DISPLAY_WELCOME_FOOTER=false`,
+    `userInfo.displayName="${encodeURIComponent(displayName)}"`,
+  ].join("&");
+
+  const src = `https://meet.jit.si/${chatId}#${params}`;
+
   return (
-    <LiveKitRoom
-      data-lk-theme="default"
-      serverUrl={process.env.NEXT_PUBLIC_LIVEKIT_URL}
-      token={token}
-      connect={true}
-      video={video}
-      audio={audio}
-    >
-      <VideoConference />
-    </LiveKitRoom>
+    <div className="flex-1 flex flex-col relative">
+      <iframe
+        src={src}
+        allow="camera; microphone; fullscreen; display-capture; autoplay"
+        className="flex-1 w-full border-0"
+        title="Video call"
+      />
+      <button
+        onClick={() => setEnded(true)}
+        className="absolute top-2 right-2 z-10 bg-red-500 hover:bg-red-600 text-white text-xs px-3 py-1.5 rounded-full transition"
+      >
+        Leave
+      </button>
+    </div>
   );
 };

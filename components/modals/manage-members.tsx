@@ -25,7 +25,8 @@ import { ServerW } from "@/types";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import UserAvatar from "@/components/user-avatar";
 import qs from "query-string";
-
+import { MemberRole } from "@prisma/client";
+import { useRouter } from "next/navigation";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -33,23 +34,23 @@ import {
   DropdownMenuPortal,
   DropdownMenuSeparator,
   DropdownMenuSub,
-  DropdownMenuSubTrigger,
   DropdownMenuSubContent,
+  DropdownMenuSubTrigger,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { MemberRole } from "@prisma/client";
-import { useRouter } from "next/navigation";
 
 const roleIcon = {
   USER: null,
   MODERATOR: <ShieldCheck className="h-4 w-4 ml-2 text-indigo-500" />,
-  ADMIN: <ShieldAlert className="h-4 w-4 text-rose-500" />,
+  ADMIN: <ShieldAlert className="h-4 w-4 ml-2 text-rose-500" />,
 };
 
 export const MembersModal = () => {
   const router = useRouter();
   const { onOpen, isOpen, onClose, type, data } = useModal();
   const [loadingId, setLoadingId] = useState("");
+  // Tracks which member's role submenu is open; never closed by pointer events
+  const [openSubForMemberId, setOpenSubForMemberId] = useState<string | null>(null);
   const isModalOpen = isOpen && type === "members";
   const { server } = data as { server: ServerW };
 
@@ -58,13 +59,9 @@ export const MembersModal = () => {
       setLoadingId(memberId);
       const url = qs.stringifyUrl({
         url: `/api/members/${memberId}`,
-        query: {
-          serverId: server?.id,
-        },
+        query: { serverId: server?.id },
       });
-
       const response = await axios.delete(url);
-
       router.refresh();
       onOpen("members", { server: response.data });
     } catch (error) {
@@ -79,14 +76,9 @@ export const MembersModal = () => {
       setLoadingId(memberId);
       const url = qs.stringifyUrl({
         url: `/api/members/${memberId}`,
-        query: {
-          serverId: server?.id,
-        },
+        query: { serverId: server?.id },
       });
-
-      const response = await axios.patch(url, {
-        role,
-      });
+      const response = await axios.patch(url, { role });
       router.refresh();
       onOpen("members", { server: response.data });
     } catch (error) {
@@ -95,9 +87,13 @@ export const MembersModal = () => {
       setLoadingId("");
     }
   };
+
   return (
     <Dialog open={isModalOpen} onOpenChange={onClose}>
-      <DialogContent className="bg-white text-black overflow-hidden">
+      <DialogContent
+        className="bg-white dark:bg-[#313338] text-black dark:text-white overflow-hidden"
+        onFocusOutside={(e) => e.preventDefault()}
+      >
         <DialogHeader className="pt-8 px-6">
           <DialogTitle className="text-2xl text-center font-bold">
             Manage Members
@@ -120,20 +116,37 @@ export const MembersModal = () => {
               {server.profileId !== member.profile.id &&
                 loadingId !== member.id && (
                   <div className="ml-auto">
-                    <DropdownMenu>
+                    <DropdownMenu
+                      onOpenChange={(open) => {
+                        if (!open) setOpenSubForMemberId(null);
+                      }}
+                    >
                       <DropdownMenuTrigger>
                         <MoreVertical className="h-4 w-4 text-zinc-500" />
                       </DropdownMenuTrigger>
                       <DropdownMenuContent side="left">
-                        <DropdownMenuSub>
-                          <DropdownMenuSubTrigger className="flex items-center">
+                        <DropdownMenuSub
+                          open={openSubForMemberId === member.id}
+                          onOpenChange={(open) => {
+                            // Only accept open=true; closing is handled by
+                            // parent DropdownMenu.onOpenChange or item selection
+                            if (open) setOpenSubForMemberId(member.id);
+                          }}
+                        >
+                          <DropdownMenuSubTrigger
+                            onPointerLeave={(e) => e.preventDefault()}
+                          >
                             <ShieldQuestion className="w-4 h-4 mr-2" />
                             <span>Role</span>
                           </DropdownMenuSubTrigger>
                           <DropdownMenuPortal>
-                            <DropdownMenuSubContent>
+                            <DropdownMenuSubContent
+                              onPointerLeave={(e) => e.preventDefault()}
+                            >
                               <DropdownMenuItem
-                                onClick={() => onRoleChange(member.id, "USER")}
+                                onClick={() =>
+                                  onRoleChange(member.id, MemberRole.USER)
+                                }
                               >
                                 <Shield className="w-4 h-4 mr-2" />
                                 User
@@ -143,7 +156,7 @@ export const MembersModal = () => {
                               </DropdownMenuItem>
                               <DropdownMenuItem
                                 onClick={() =>
-                                  onRoleChange(member.id, "MODERATOR")
+                                  onRoleChange(member.id, MemberRole.MODERATOR)
                                 }
                               >
                                 <ShieldCheck className="w-4 h-4 mr-2" />

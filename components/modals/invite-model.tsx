@@ -50,7 +50,7 @@ export const InviteModal = () => {
   };
   return (
     <Dialog open={isModalOpen} onOpenChange={onClose}>
-      <DialogContent className="bg-white text-black p-0 overflow-hidden">
+      <DialogContent className="bg-white dark:bg-[#313338] text-black dark:text-white p-0 overflow-hidden">
         <DialogHeader className="pt-8 px-6">
           <DialogTitle className="text-2xl text-center font-bold">
             Invite People
@@ -63,7 +63,7 @@ export const InviteModal = () => {
           <div className="flex items-center mt-2 gap-x-2">
             <Input
               disabled={isLoading}
-              className="bg-zinc-300/50 border-0 focus-visible:ring-0 text-black focus-visible:ring-offset-0"
+              className="bg-zinc-300/50 border-0 focus-visible:ring-0 text-black dark:text-white focus-visible:ring-offset-0"
               value={inviteUrl}
             />
             <Button disabled={isLoading} onClick={onCopy} size="icon">

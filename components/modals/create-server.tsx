@@ -72,7 +72,7 @@ export const ServerModal = () => {
 
   return (
     <Dialog open={isModalOpen} onOpenChange={handleClose}>
-      <DialogContent className="bg-white text-black p-0 overflow-hidden">
+      <DialogContent className="bg-white dark:bg-[#313338] text-black dark:text-white p-0 overflow-hidden">
         <DialogHeader className="pt-8 px-6">
           <DialogTitle className="text-2xl text-center font-bold">
             Customize your server
@@ -117,24 +117,17 @@ export const ServerModal = () => {
                     <FormControl>
                       <Input
                         disabled={isLoading}
-                        className="bg-zinc-300/50 border-0 focus-visible:ring-0 text-black focus-visible:ring-offset-0"
+                        className="bg-zinc-300/50 border-0 focus-visible:ring-0 text-black dark:text-white focus-visible:ring-offset-0"
                         placeholder="Enter server name"
                         {...field}
                       />
                     </FormControl>
                     <FormMessage />
-
-                    <a
-                      className="underline text-indigo-500"
-                      href="http://localhost:3000/invite/01fb727b-7c94-4b2a-a5ee-9ef54da3c303"
-                    >
-                      Join this server
-                    </a>
                   </FormItem>
                 )}
               />
             </div>
-            <DialogFooter className="bg-gray-100 px-6 py-4">
+            <DialogFooter className="bg-gray-100 dark:bg-[#2B2D31] px-6 py-4">
               <Button variant="primary" disabled={isLoading}>
                 Create server
               </Button>
